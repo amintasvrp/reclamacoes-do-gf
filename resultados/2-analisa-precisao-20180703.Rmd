@@ -16,10 +16,10 @@ theme_set(theme_bw())
 
 ```{r carrega}
 
-reclamacoes = read_csv(here("data/3-avaliacao-humana/reclamacoes-avaliadas-20180703.csv"))
+reclamacoes = read_csv(here("data/3-avaliacao-humana/reclamacoes-avaliadas-20190515.csv"))
 sentimentos = read_csv(here("data/5-sentimentos/sentimento.csv"))
 
-reclamacoes = reclamacoes %>% mutate(comprimento_reclamacao = str_length(reclamacao))
+reclamacoes = reclamacoes %>% mutate(comprimento_reclamacao = str_length(texto))
 ```
 
 `reclamacoes_l` tem um formato long em vez de wide (explicado [aqui](https://sejdemyr.github.io/r-tutorials/basics/wide-and-long/)).
@@ -29,7 +29,7 @@ reclamacoes = reclamacoes %>%
     left_join(sentimentos, by = "id")
 
 reclamacoes_l = reclamacoes %>%  
-    select(-palavras_op30, -palavras_sent, -grupo_avaliando) %>% 
+    select(-palavras_op30, -palavras_sent, -`Grupo que vai avaliar`) %>% 
     gather(key = "lexico", 
            value = "polaridade", 
            sentimento_op30, sentimento_sent)
@@ -38,13 +38,31 @@ reclamacoes_l %>% View()
 
 ```
 
-Converte polaridades para escala 0-5
+Converte polaridades para escala 1-5
 
 ```{r}
+
 # Faça você mesmo. Crie a variável polaridade_normalizada
-# reclamacoes_l = reclamacoes_l %>% 
-#     group_by(lexico) %>% 
-#     mutate(polaridade_normalizada = ALGOAQUI)
+
+# Normalização mínimo-máximo
+scaling <- function(valor, minimo, maximo) {
+  valor = ((valor - minimo)/(maximo - minimo)) * 4 + 1
+  return(valor)
+}
+
+# Converter satisfação em insatisfação
+unsatisfaction <- function(valor){
+  valor = (valor - 6) * -1                              
+  return(valor)
+}
+
+polaridade_minima = min(reclamacoes_l$polaridade)
+polaridade_maxima = max(reclamacoes_l$polaridade)
+
+reclamacoes_l = reclamacoes_l %>% 
+     group_by(lexico) %>% 
+     mutate(polaridade_normalizada = unsatisfaction(scaling(polaridade, polaridade_minima, polaridade_maxima)))
+
 ```
 
 Calcula o erro (SSE) por reclamação

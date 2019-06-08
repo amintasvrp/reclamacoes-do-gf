@@ -68,3 +68,22 @@ sentimentos %>%
 
 ```
 
+A análise que se segue foi realizada pelo grupo em questão:
+
+```{r visualizacao}
+
+sentimentos_op30 = sentimentos$sentimento_op30
+sentimentos_sent = sentimentos$sentimento_sent
+
+View(sentimentos_op30)
+View(sentimentos_sent)
+
+```
+
+
+
+
+
+
+
+
