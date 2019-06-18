@@ -8,6 +8,7 @@ library(tidyverse)
 library(here)
 library(modelr)
 library(broom)
+library(GGally)
 
 theme_set(theme_bw())
 ```
@@ -109,11 +110,27 @@ Agora um modelo para responder sua pergunta.
 ```{r}
 #Cria variável dummy para preditor categórico
 reclamacoes_l = reclamacoes_l %>% mutate(lexico.dummy = if_else(lexico == "sentimento_sent", 1, 0))
+reclamacoes_sent = reclamacoes_l %>% filter(lexico.dummy == 1)
+reclamacoes_op30 = reclamacoes_l %>% filter(lexico.dummy == 0)
+
+
 #Você precisa entender o que fez acima para interpretar sua regressão
 #Você pode também criar uma variável dummy para o órgao (se anac ou inss)
+reclamacoes_l
+ggpairs(reclamacoes_l %>% select(erro), 
+        ggplot2::aes(colour=lexico), 
+        upper = list(continuous=wrap("density", alpha=1), combo="box"),
+        lower = list(continuous=wrap("points", alpha=1), combo=wrap("dot", alpha=1)),
+        diag = list(continuous=wrap("densityDiag")))
 
-# ggpairs(reclamacoes_l %>% select(<selecione as colulas que vc quer usar aqui>))
-# lm1 = lm(<seu modelo>)
+lm(reclamacoes_l$erro ~ reclamacoes_l$lexico.dummy)
+lm1 = lm(reclamacoes_op30$erro ~ reclamacoes_op30$polaridade_normalizada)
+lm2 = lm(reclamacoes_sent$erro ~ reclamacoes_sent$polaridade_normalizada)
+
+plot(lm1,lm2)
+abline(lm1)
+
+
 ```
 
 **Dica** - o texto de resultado que queremos produzir é algo como: 
