@@ -117,6 +117,9 @@ reclamacoes_op30 = reclamacoes_l %>% filter(lexico.dummy == 0)
 #Você precisa entender o que fez acima para interpretar sua regressão
 #Você pode também criar uma variável dummy para o órgao (se anac ou inss)
 
+reclamacoes_l[12][reclamacoes_l[12]=="sentimento_op30"] <- "OP_30"
+reclamacoes_l[12][reclamacoes_l[12]=="sentimento_sent"] <- "SENT"
+
 ggpairs(reclamacoes_l %>% select(erro), 
         ggplot2::aes(colour=lexico), 
         upper = list(continuous=wrap("density", alpha=1), combo="box"),
