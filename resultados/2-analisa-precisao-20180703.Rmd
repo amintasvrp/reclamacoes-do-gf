@@ -116,20 +116,16 @@ reclamacoes_op30 = reclamacoes_l %>% filter(lexico.dummy == 0)
 
 #Você precisa entender o que fez acima para interpretar sua regressão
 #Você pode também criar uma variável dummy para o órgao (se anac ou inss)
-reclamacoes_l
+
 ggpairs(reclamacoes_l %>% select(erro), 
         ggplot2::aes(colour=lexico), 
         upper = list(continuous=wrap("density", alpha=1), combo="box"),
         lower = list(continuous=wrap("points", alpha=1), combo=wrap("dot", alpha=1)),
         diag = list(continuous=wrap("densityDiag")))
 
-lm(reclamacoes_l$erro ~ reclamacoes_l$lexico.dummy)
-lm1 = lm(reclamacoes_op30$erro ~ reclamacoes_op30$polaridade_normalizada)
-lm2 = lm(reclamacoes_sent$erro ~ reclamacoes_sent$polaridade_normalizada)
+summary(lm(reclamacoes_sent$erro ~ reclamacoes_op30$erro))
 
-plot(lm1,lm2)
-abline(lm1)
-
+# Compreendendo o modelo gerado como erro_sent = 0.93051 * erro_op30 + 0.27073 percebemos, atraves do ponto fixo, que quando o erro de op30 eh menor do que 3.8959, este lexico possui maior precisao em relaçao a sent. A partir deste valor, a situaçao se inverte. Portanto, chegamos a conclusao de que quanto menor os erros dos lexicos, mais preciso op30 sera em relacao a sent. No entanto, sent se mantem mais preciso do que op30 quando a imprecisao supera o valor de 3.8959.  
 
 ```
 
