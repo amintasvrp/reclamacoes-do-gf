@@ -83,42 +83,55 @@ Uma medida interessante da eficiência desses métodos é calcular a soma dos er
 
 ```{r}
 reclamacoes %>% 
-    ggplot(aes(x = sentimento_op30, y = sentimento_sent)) + 
-    geom_abline(slope = 1, intercept = 0, color = "grey") + 
+    ggplot(aes(x = sentimento_op30, y = sentimento_sent)) + xlab("Polaridade Acumulada de OP_30") + ylab("Polaridade Acumulada de SENT") +
+    geom_abline(slope = 1, intercept = 0, color = "red") + 
     geom_count(alpha = .7) 
 ```
 
 ```{r}
 reclamacoes_l %>% 
-    ggplot(aes(x = insatisfacao, y = polaridade_normalizada, group = insatisfacao)) + 
-    geom_abline(slope = 1, intercept = 0, color = "grey") + 
+    ggplot(aes(x = insatisfacao, y = polaridade_normalizada, group = insatisfacao)) + xlab("Polaridade da Avaliaçao Humana") + ylab("Polaridade dos Léxicos") +
+    geom_abline(slope = 1, intercept = 0, color = "red") + 
     geom_jitter(alpha = .7)  + 
     facet_wrap(~ lexico)
 
 reclamacoes_l %>% 
-    ggplot(aes(x = insatisfacao, y = erro, group = insatisfacao)) + 
+    ggplot(aes(x = insatisfacao, y = erro, group = insatisfacao)) + xlab("Polaridade da Avaliação Humana") + ylab("Erro Quadrático") +
     geom_jitter(alpha = .5)  +
     # geom_boxplot() + 
     facet_wrap(~ lexico)
 ```
-
-
-## Há relação entre o léxico e o erro?
+##Há relação entre o léxico e o erro?
 
 Agora um modelo para responder sua pergunta.
 
 ```{r}
 #Cria variável dummy para preditor categórico
-reclamacoes_l = reclamacoes_l %>% mutate(lexico.dummy = if_else(lexico == "sentimento_sent", 1, 0))
-reclamacoes_sent = reclamacoes_l %>% filter(lexico.dummy == 1)
-reclamacoes_op30 = reclamacoes_l %>% filter(lexico.dummy == 0)
-
-
 #Você precisa entender o que fez acima para interpretar sua regressão
 #Você pode também criar uma variável dummy para o órgao (se anac ou inss)
 
+reclamacoes_l = reclamacoes_l %>% mutate(lexico.dummy = if_else(lexico == "sentimento_sent", 1, 0))
+reclamacoes_sent = reclamacoes_l %>% filter(lexico.dummy == 1)
+reclamacoes_op30 = reclamacoes_l %>% filter(lexico.dummy == 0)
+```
+
+Para termos uma melhor melhor métrica para avaliarmos o erro quadrático, calculamos o Erro Quadrático Médio:
+
+```{r}
+
+EQM_OP_30 = sum(reclamacoes_op30$erro)/60
+EQM_SENT = sum(reclamacoes_sent$erro)/60
+
 reclamacoes_l[12][reclamacoes_l[12]=="sentimento_op30"] <- "OP_30"
 reclamacoes_l[12][reclamacoes_l[12]=="sentimento_sent"] <- "SENT"
+
+```
+
+Construímos graficamente a regressão simples entre o erros quadráticos de OP_30 e SENT:
+
+```{r}
+
+summary(lm(reclamacoes_sent$erro ~ reclamacoes_op30$erro))
 
 ggpairs(reclamacoes_l %>% select(erro), 
         ggplot2::aes(colour=lexico), 
@@ -126,7 +139,6 @@ ggpairs(reclamacoes_l %>% select(erro),
         lower = list(continuous=wrap("points", alpha=1), combo=wrap("dot", alpha=1)),
         diag = list(continuous=wrap("densityDiag")))
 
-summary(lm(reclamacoes_sent$erro ~ reclamacoes_op30$erro))
 ```
 
 
@@ -136,3 +148,33 @@ com um intervalo de confiança de 95%. Nele percebemos, através do ponto fixo,
 que quando o erro de OP_30 é menor do que 3.8959, este léxico possui maior precisão em relação a SENT.
 No entanto, a partir deste valor a situação se inverte. Portanto, chegamos a conclusão de que quanto menor os erros dos léxicos,
 mais preciso OP_30 será em relação à SENT. No entanto, SENT se mantém mais preciso do que OP_30 quando a imprecisão supera o valor mencionado.
+
+## O índice de reclamação das agências muda de acordo com a avaliação ?
+
+```{r}
+## Avaliaçao Humana
+
+reclamacoes_op30_anatel = reclamacoes_op30 %>% filter(orgao == "ANATEL")
+reclamacoes_op30_ans = reclamacoes_op30 %>% filter(orgao == "ANS")
+
+boxplot(reclamacoes_op30_anatel$insatisfacao, 
+        reclamacoes_op30_ans$insatisfacao, col = c("red","green"), 
+        ylab = "Insatisfação gerada por Humanos", names = c("ANATEL", "ANS"))
+
+## OP_30
+reclamacoes_op30_anatel = reclamacoes_op30 %>% filter(orgao == "ANATEL")
+reclamacoes_op30_ans = reclamacoes_op30 %>% filter(orgao == "ANS")
+
+boxplot(reclamacoes_op30_anatel$polaridade_normalizada, 
+        reclamacoes_op30_ans$polaridade_normalizada, col = c("red","green"), 
+        ylab = "Insatisfação gerada por OP_30", names = c("ANATEL", "ANS"))
+
+## SENT
+reclamacoes_sent_anatel = reclamacoes_sent %>% filter(orgao == "ANATEL")
+reclamacoes_sent_ans = reclamacoes_sent %>% filter(orgao == "ANS")
+
+boxplot(reclamacoes_sent_anatel$polaridade_normalizada, 
+        reclamacoes_sent_ans$polaridade_normalizada, col = c("red","green"), 
+        ylab = "Insatisfação gerada por SENT", names = c("ANATEL", "ANS"))
+
+```
